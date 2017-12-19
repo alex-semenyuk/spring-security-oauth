@@ -113,9 +113,10 @@
 						<exclude>**/*LiveTest.java</exclude>
 						<exclude>**/*MvcTest.java</exclude>
 					</excludes>
+                    <parallel>methods</parallel>
+                    <threadCount>4</threadCount>
 				</configuration>
 			</plugin>
-
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>

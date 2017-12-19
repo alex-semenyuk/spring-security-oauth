@@ -1,8 +1,11 @@
 package org.baeldung.test;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
@@ -20,7 +23,25 @@ public class TokenRevocationLiveTest {
         assertNotNull(accessToken);
     }
 
-    //
+    @Test
+    public void refreshAccessToken() {
+        List<DataClass> data = new ArrayList<>();
+        data.add(new DataClass("fooClientIdPassword", "john", "123"));
+        data.add(new DataClass("fooClientIdPassword", "tom", "111"));
+        data.add(new DataClass("fooClientIdPassword", "user1", "pass"));
+        data.add(new DataClass("fooClientIdPassword", "admin", "nimda"));
+        data.parallelStream().forEach(item -> {
+            final String oldAccessToken = obtainAccessToken(item.getClientIdPassword(), item.getName(), item.getPassword());
+            final String newAccessToken = obtainRefreshToken(item.getClientIdPassword());
+            System.out.println(Thread.currentThread().getId() + ": "
+                    + item.getClientIdPassword() + " "
+                    + item.getName() + " "
+                    + item.getPassword()
+                    + " oldToken: " + oldAccessToken
+                    + " newToken: " + newAccessToken);
+            assertNotSame(newAccessToken, oldAccessToken);
+        });
+    }
 
     private String obtainAccessToken(String clientId, String username, String password) {
         final Map<String, String> params = new HashMap<String, String>();
@@ -85,4 +106,42 @@ public class TokenRevocationLiveTest {
     // final Response refreshTokenResponse2 = RestAssured.given().header("Authorization", "Bearer " + accessToken4).get("http://localhost:8082/spring-security-oauth-resource/tokens");
     // assertEquals(401, refreshTokenResponse2.getStatusCode());
     // }
+
+    class DataClass {
+//        "fooClientIdPassword", "john", "123"
+        private String clientIdPassword;
+        private String name;
+        private String password;
+
+
+        public DataClass(String clientIdPassword, String name, String password) {
+            this.clientIdPassword = clientIdPassword;
+            this.name = name;
+            this.password = password;
+        }
+
+        public String getClientIdPassword() {
+            return clientIdPassword;
+        }
+
+        public void setClientIdPassword(String clientIdPassword) {
+            this.clientIdPassword = clientIdPassword;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+    }
 }

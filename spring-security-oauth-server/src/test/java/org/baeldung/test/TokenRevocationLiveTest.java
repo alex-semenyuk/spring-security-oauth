@@ -3,9 +3,7 @@ package org.baeldung.test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
@@ -14,8 +12,6 @@ import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.response.Response;
 
 public class TokenRevocationLiveTest {
-
-    private String refreshToken;
 
     @Test
     public void givenDBUser_whenRevokeToken_thenAuthorized() {
@@ -26,28 +22,38 @@ public class TokenRevocationLiveTest {
     @Test
     public void refreshAccessToken() {
         final String oldAccessToken = obtainAccessToken("fooClientIdPassword", "user1", "pass");
-        final String newAccessToken = obtainRefreshToken("fooClientIdPassword");
+        final String newAccessToken = obtainNewAccessToken("fooClientIdPassword", "user1", "pass");
         assertNotSame(newAccessToken, oldAccessToken);
     }
 
     private String obtainAccessToken(String clientId, String username, String password) {
+        Response response = obtainAccessTokenResponse(clientId, username, password);
+        return response.jsonPath().getString("access_token");
+    }
+
+    private String obtainNewAccessToken(String clientId, String username, String password) {
+        Response response = obtainAccessTokenResponse(clientId, username, password);
+        String refreshToken = response.jsonPath().getString("refresh_token");
+        response = obtainRefreshTokenResponse(clientId, refreshToken);
+        return response.jsonPath().getString("access_token");
+    }
+
+    private Response obtainAccessTokenResponse (String clientId, String username, String password) {
         final Map<String, String> params = new HashMap<String, String>();
         params.put("grant_type", "password");
         params.put("client_id", clientId);
         params.put("username", username);
         params.put("password", password);
-        final Response response = RestAssured.given().auth().preemptive().basic(clientId, "secret").and().with().params(params).when().post("http://localhost:8081/spring-security-oauth-server/oauth/token");
-        refreshToken = response.jsonPath().getString("refresh_token");
-        return response.jsonPath().getString("access_token");
+        return RestAssured.given().auth().preemptive().basic(clientId, "secret").and().with().params(params).when().post("http://localhost:8081/spring-security-oauth-server/oauth/token");
+
     }
 
-    private String obtainRefreshToken(String clientId) {
+    private Response obtainRefreshTokenResponse (String clientId, String refreshToken) {
         final Map<String, String> params = new HashMap<String, String>();
         params.put("grant_type", "refresh_token");
         params.put("client_id", clientId);
         params.put("refresh_token", refreshToken);
-        final Response response = RestAssured.given().auth().preemptive().basic(clientId, "secret").and().with().params(params).when().post("http://localhost:8081/spring-security-oauth-server/oauth/token");
-        return response.jsonPath().getString("access_token");
+        return RestAssured.given().auth().preemptive().basic(clientId, "secret").and().with().params(params).when().post("http://localhost:8081/spring-security-oauth-server/oauth/token");
     }
 
     private void authorizeClient(String clientId) {
